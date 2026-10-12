@@ -9,7 +9,7 @@
     <string name="expand_rail">Rozwiń szynę</string>
     <string name="failed_to_read_conf_file">Nie udało się odczytać pliku .conf</string>
     <string name="failed_to_read_zip_archive">Nie udało się odczytać archiwum .zip</string>
-    <string name="only_conf_or_zip_supported">Tylko pliki '.conf' lub '.zip' obsługiwane</string>
+    <string name="only_conf_or_zip_supported">Tylko pliki \'.conf\' lub \'.zip\' obsługiwane</string>
     <string name="tunnel_state_starting">Uruchamianie</string>
     <string name="tunnel_state_stopping">Zatrzymywanie</string>
     <string name="tunnel_state_healthy">Poprawny</string>
@@ -46,6 +46,7 @@
     <string name="light">Jasny</string>
     <string name="dark">Ciemny</string>
     <string name="display_theme">Motyw wyświetlania</string>
+    <string name="language">Język</string>
     <string name="trusted_wifi_names">Nazwy zaufanych sieci Wi-Fi</string>
     <string name="primary_tunnel">Tunel domyślny</string>
     <string name="entry_tunnel">Tunel wejściowy</string>
