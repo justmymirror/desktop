@@ -22,14 +22,16 @@ import com.zaneschepke.wireguardautotunnel.client.service.DaemonService
 import com.zaneschepke.wireguardautotunnel.composeApp.BuildConfig
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.Res
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_not_running
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.background_service_name
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_outdated_template
-import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_requires_approval
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_restart_command_label
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_start_command_label
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.donate_action
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.donation_prompt_message
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.mac_service_requires_approval_template
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.open_system_settings
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.theme_from_image_failed
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.wifi_helper_service_name
 import com.zaneschepke.wireguardautotunnel.core.profile.AppVariant
 import com.zaneschepke.wireguardautotunnel.desktop.ui.navigation.Route
 import com.zaneschepke.wireguardautotunnel.desktop.ui.sideeffects.AppSideEffect
@@ -38,6 +40,7 @@ import com.zaneschepke.wireguardautotunnel.desktop.ui.state.DaemonConnectionStat
 import com.zaneschepke.wireguardautotunnel.desktop.ui.theme.Aqua
 import com.zaneschepke.wireguardautotunnel.desktop.update.AppUpdater
 import com.zaneschepke.wireguardautotunnel.desktop.util.LocaleUtil
+import com.zaneschepke.wireguardautotunnel.desktop.wifi.MacWifiNameCoordinator
 import dev.nucleusframework.core.runtime.Platform
 import dev.nucleusframework.servicemanagement.AppService
 import dev.nucleusframework.servicemanagement.AppServiceManager
@@ -55,6 +58,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.compose.resources.getString
 import org.orbitmvi.orbit.OrbitContainerHost
+import org.orbitmvi.orbit.syntax.Syntax
 import org.orbitmvi.orbit.viewmodel.orbitContainer
 
 @OptIn(FlowPreview::class)
@@ -69,6 +73,7 @@ class AppViewModel(
     @Suppress("unused") private val autoTunnelCoordinator: AutoTunnelCoordinator,
     @Suppress("unused") private val logCoordinator: LogCoordinator,
     @Suppress("unused") private val dnsSettingsCoordinator: DnsSettingsCoordinator,
+    @Suppress("unused") private val macWifiNameCoordinator: MacWifiNameCoordinator,
 ) : OrbitContainerHost<AppUiState, AppUiState, AppSideEffect>, ViewModel() {
 
     private val log = Logger.withTag("AppViewModel")
@@ -188,22 +193,18 @@ class AppViewModel(
             // load it. Safe to call on every launch as it no-ops if already registered/approved.
             if (isMacOS) {
                 intent {
-                    val service = AppService.Daemon(daemonServiceName)
-                    AppServiceManager.register(service).onFailure {
-                        log.w(it) { "Failed to register macOS daemon service '$daemonServiceName'" }
-                    }
-                    val status = AppServiceManager.status(service)
-                    log.i { "macOS daemon service '$daemonServiceName' status: $status" }
-                    if (status == AppServiceStatus.REQUIRES_APPROVAL) {
-                        postSideEffect(
-                            AppSideEffect.NavigableToast(
-                                id = DAEMON_APPROVAL_TOAST_ID,
-                                message = getString(Res.string.daemon_requires_approval),
-                                actionLabel = getString(Res.string.open_system_settings),
-                                onAction = { AppServiceManager.openSystemSettingsLoginItems() },
-                            )
-                        )
-                    }
+                    registerMacService(
+                        AppService.Daemon(daemonServiceName),
+                        logLabel = "daemon",
+                        displayName = getString(Res.string.background_service_name),
+                        toastId = DAEMON_APPROVAL_TOAST_ID,
+                    )
+                    registerMacService(
+                        AppService.Agent(wifiAgentServiceName),
+                        logLabel = "Wi-Fi helper",
+                        displayName = getString(Res.string.wifi_helper_service_name),
+                        toastId = WIFI_AGENT_APPROVAL_TOAST_ID,
+                    )
                 }
             }
 
@@ -284,26 +285,50 @@ class AppViewModel(
         if (isWindows) "net stop $daemonServiceName && net start $daemonServiceName"
         else "sudo systemctl restart $daemonServiceName.service"
 
+    private suspend fun Syntax<AppUiState, AppSideEffect>.registerMacService(
+        service: AppService,
+        logLabel: String,
+        displayName: String,
+        toastId: String,
+    ) {
+        AppServiceManager.register(service).onFailure {
+            log.w(it) { "Failed to register macOS $logLabel" }
+        }
+        val status = AppServiceManager.status(service)
+        log.i { "macOS $logLabel status: $status" }
+        if (status == AppServiceStatus.REQUIRES_APPROVAL) {
+            postSideEffect(
+                AppSideEffect.NavigableToast(
+                    id = toastId,
+                    message =
+                        getString(Res.string.mac_service_requires_approval_template, displayName),
+                    actionLabel = getString(Res.string.open_system_settings),
+                    onAction = { AppServiceManager.openSystemSettingsLoginItems() },
+                )
+            )
+        }
+    }
+
     /**
-     * Forces launchd to reload the daemon binary. Returns true once it's back and re-registered.
+     * Forces launchd to reload the daemon and Wi-Fi helper binaries. Returns true once the daemon
+     * is back and re-registered.
      */
     private suspend fun restartMacDaemon(): Boolean {
-        val service = AppService.Daemon(daemonServiceName)
+        val daemonOk = restartMacService(AppService.Daemon(daemonServiceName), "daemon")
+        restartMacService(AppService.Agent(wifiAgentServiceName), "Wi-Fi helper")
+        return daemonOk
+    }
+
+    private suspend fun restartMacService(service: AppService, label: String): Boolean {
         val unregisterError = suspendCancellableCoroutine { cont ->
             AppServiceManager.unregister(service) { error -> cont.resume(error) }
         }
         if (unregisterError != null) {
-            log.w {
-                "Failed to unregister outdated macOS daemon service '$daemonServiceName': $unregisterError"
-            }
+            log.w { "Failed to unregister outdated macOS $label: $unregisterError" }
             return false
         }
         return AppServiceManager.register(service)
-            .onFailure {
-                log.w(it) {
-                    "Failed to re-register macOS daemon service '$daemonServiceName' after update"
-                }
-            }
+            .onFailure { log.w(it) { "Failed to re-register macOS $label after update" } }
             .isSuccess
     }
 
@@ -311,6 +336,7 @@ class AppViewModel(
         private const val DAEMON_NOT_RUNNING_TOAST_ID = "daemon_not_running"
         private const val DAEMON_OUTDATED_TOAST_ID = "daemon_outdated"
         private const val DAEMON_APPROVAL_TOAST_ID = "daemon_requires_approval"
+        private const val WIFI_AGENT_APPROVAL_TOAST_ID = "wifi_agent_requires_approval"
         private const val DONATION_PROMPT_TOAST_ID = "donation_prompt"
         private val DISCONNECT_GRACE_PERIOD = 5.seconds
         private val DONATION_PROMPT_DURATION = 30.seconds
@@ -318,6 +344,7 @@ class AppViewModel(
         private val isWindows = Platform.Current == Platform.Windows
         private val isMacOS = Platform.Current == Platform.MacOS
         private val daemonServiceName = "${AppVariant.current.linuxFsName}-daemon"
+        private val wifiAgentServiceName = "${AppVariant.current.linuxFsName}-wifi"
         private val isSystemdActive = File("/run/systemd/system").isDirectory
     }
 }

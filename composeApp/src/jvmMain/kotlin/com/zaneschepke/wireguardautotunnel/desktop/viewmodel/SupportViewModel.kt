@@ -14,6 +14,7 @@ import com.zaneschepke.wireguardautotunnel.desktop.update.AppUpdater
 import com.zaneschepke.wireguardautotunnel.desktop.update.UpdateState
 import dev.nucleusframework.servicemanagement.AppService
 import dev.nucleusframework.servicemanagement.AppServiceManager
+import dev.nucleusframework.servicemanagement.AppServiceStatus
 import dev.nucleusframework.updater.UpdateInfo
 import dev.nucleusframework.updater.UpdateResult
 import java.io.File
@@ -62,12 +63,11 @@ class SupportViewModel(private val appUpdater: AppUpdater) :
 
     fun onInstallUpdate(file: File) = intent { appUpdater.install(file) }
 
-    /** macOS only: unregisters the LaunchDaemon so it stops before the app itself is removed. */
+    // macOS unregisters the daemon and Wi-Fi helper before the app itself is removed.
     fun onRemoveBackgroundService() = intent {
-        val service = AppService.Daemon(daemonServiceName)
-        val error = suspendCancellableCoroutine { cont ->
-            AppServiceManager.unregister(service) { cont.resume(it) }
-        }
+        val daemonError = unregisterMacService(AppService.Daemon(daemonServiceName))
+        val agentError = unregisterMacService(AppService.Agent(wifiAgentServiceName))
+        val error = daemonError ?: agentError
         postSideEffect(
             if (error == null) {
                 AppSideEffect.Toast(
@@ -83,7 +83,18 @@ class SupportViewModel(private val appUpdater: AppUpdater) :
         )
     }
 
+    private suspend fun unregisterMacService(service: AppService): String? {
+        val status = AppServiceManager.status(service)
+        if (status == AppServiceStatus.NOT_REGISTERED || status == AppServiceStatus.NOT_FOUND) {
+            return null
+        }
+        return suspendCancellableCoroutine { cont ->
+            AppServiceManager.unregister(service) { cont.resume(it) }
+        }
+    }
+
     companion object {
         private val daemonServiceName = "${AppVariant.current.linuxFsName}-daemon"
+        private val wifiAgentServiceName = "${AppVariant.current.linuxFsName}-wifi"
     }
 }

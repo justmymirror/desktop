@@ -12,12 +12,16 @@ import com.zaneschepke.wireguardautotunnel.desktop.viewmodel.SettingsViewModel
 import com.zaneschepke.wireguardautotunnel.desktop.viewmodel.SupportViewModel
 import com.zaneschepke.wireguardautotunnel.desktop.viewmodel.TunnelViewModel
 import com.zaneschepke.wireguardautotunnel.desktop.viewmodel.TunnelsViewModel
+import com.zaneschepke.wireguardautotunnel.desktop.wifi.MacWifiNameCoordinator
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val viewModelModule = module {
     single { AppUpdater() }
+    // Created at startup so the menu-bar app can raise the Location prompt and
+    // refresh the permission card while the window is hidden.
+    single(createdAtStart = true) { MacWifiNameCoordinator(scope = get()) }
     viewModelOf(::AppViewModel)
     viewModelOf(::TunnelsViewModel)
     viewModel { (id: Long) -> TunnelViewModel(get(), get(), get(), id) }

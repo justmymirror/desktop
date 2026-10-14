@@ -125,7 +125,12 @@ class TunnelDaemon(
                     }
                     install(hmacShieldPlugin)
                     routing {
-                        daemonRoutes(cacheRepository, autoTunnelSupervisor, daemonLogService)
+                        daemonRoutes(
+                            cacheRepository,
+                            autoTunnelSupervisor,
+                            daemonLogService,
+                            networkMonitor,
+                        )
                         tunnelRoutes(backend, autoTunnelSupervisor, cacheRepository)
                         backendRoutes(backend, cacheRepository)
                     }

@@ -5,16 +5,19 @@ import com.zaneschepke.wireguardautotunnel.core.ipc.Routes
 import com.zaneschepke.wireguardautotunnel.core.ipc.dto.AutoTunnelConfigDto
 import com.zaneschepke.wireguardautotunnel.core.ipc.dto.DaemonInfoDto
 import com.zaneschepke.wireguardautotunnel.core.ipc.dto.request.FlagRequest
+import com.zaneschepke.wireguardautotunnel.core.ipc.dto.request.WifiSsidReport
 import com.zaneschepke.wireguardautotunnel.daemon.BuildConfig
 import com.zaneschepke.wireguardautotunnel.daemon.autotunnel.AutoTunnelSupervisor
 import com.zaneschepke.wireguardautotunnel.daemon.data.DaemonCacheRepository
 import com.zaneschepke.wireguardautotunnel.daemon.log.DaemonLogService
+import com.zaneschepke.wireguardautotunnel.daemon.tunnel.DesktopNetworkMonitor
 import io.ktor.http.*
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondFile
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import io.ktor.websocket.Frame
 import java.io.File
 import kotlinx.coroutines.awaitCancellation
 
@@ -24,6 +27,7 @@ fun Route.daemonRoutes(
     daemonCacheRepository: DaemonCacheRepository,
     autoTunnelSupervisor: AutoTunnelSupervisor,
     daemonLogService: DaemonLogService,
+    networkMonitor: DesktopNetworkMonitor? = null,
 ) {
     get(Routes.DAEMON_STATUS) { call.response.status(HttpStatusCode.OK) }
     webSocket(Routes.DAEMON_STATUS_WS) {
@@ -63,6 +67,27 @@ fun Route.daemonRoutes(
     post(Routes.DAEMON_AUTO_TUNNEL_OVERRIDE) {
         autoTunnelSupervisor.notifyUserOverride()
         call.respond(HttpStatusCode.OK, "Auto-tunnel user override recorded")
+    }
+
+    post(Routes.DAEMON_WIFI_SSID) {
+        val report = call.receive<WifiSsidReport>()
+        log.d {
+            if (report.ssid.isBlank()) "Cleared observed Wi-Fi name"
+            else "Recorded observed Wi-Fi name"
+        }
+        networkMonitor?.setObservedSsid(report.ssid)
+        call.respond(HttpStatusCode.OK, "Wi-Fi name recorded")
+    }
+
+    webSocket(Routes.DAEMON_WIFI_UNDERLAY_WS) {
+        val requests = networkMonitor?.wifiReadRequests
+        try {
+            if (requests == null) {
+                awaitCancellation()
+            } else {
+                requests.collect { send(Frame.Text(Routes.WIFI_UNDERLAY_READ)) }
+            }
+        } finally {}
     }
 
     put(Routes.DAEMON_LOGS_ENABLED) {

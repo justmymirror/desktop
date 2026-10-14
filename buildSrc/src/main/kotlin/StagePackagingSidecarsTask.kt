@@ -30,6 +30,15 @@ abstract class StagePackagingSidecarsTask @Inject constructor() : DefaultTask() 
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val macDaemonPlist: RegularFileProperty
 
+    @get:Input @get:Optional abstract val macWifiAgentBundleId: Property<String>
+
+    @get:InputFile
+    @get:Optional
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val macWifiAgentPlist: RegularFileProperty
+
+    @get:Input abstract val appVariant: Property<String>
+
     @get:InputFile
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val linuxService: RegularFileProperty
@@ -82,15 +91,23 @@ abstract class StagePackagingSidecarsTask @Inject constructor() : DefaultTask() 
         out.mkdirs()
         val fsName = appFsName.get()
         val display = appDisplayName.get()
+        val variant = appVariant.get()
         out.resolve("wgtunnel-daemon.service")
-            .writeText(replaceTokens(linuxService.get().asFile.readText(), fsName, display))
+            .writeText(
+                replaceTokens(linuxService.get().asFile.readText(), fsName, display, variant)
+            )
         out.resolve("install.sh")
             .writeExecutable(
-                replaceTokens(linuxInstallScript.get().asFile.readText(), fsName, display)
+                replaceTokens(linuxInstallScript.get().asFile.readText(), fsName, display, variant)
             )
         out.resolve("uninstall.sh")
             .writeExecutable(
-                replaceTokens(linuxUninstallScript.get().asFile.readText(), fsName, display)
+                replaceTokens(
+                    linuxUninstallScript.get().asFile.readText(),
+                    fsName,
+                    display,
+                    variant,
+                )
             )
 
         val hooks = hooksOutputDir.get().asFile
@@ -99,12 +116,22 @@ abstract class StagePackagingSidecarsTask @Inject constructor() : DefaultTask() 
         hooks
             .resolve("before-install.sh")
             .writeExecutable(
-                replaceTokens(linuxBeforeInstallScript.get().asFile.readText(), fsName, display)
+                replaceTokens(
+                    linuxBeforeInstallScript.get().asFile.readText(),
+                    fsName,
+                    display,
+                    variant,
+                )
             )
         hooks
             .resolve("before-remove.sh")
             .writeExecutable(
-                replaceTokens(linuxBeforeRemoveScript.get().asFile.readText(), fsName, display)
+                replaceTokens(
+                    linuxBeforeRemoveScript.get().asFile.readText(),
+                    fsName,
+                    display,
+                    variant,
+                )
             )
         // Pacman only calls after-upgrade (never after-install) when replacing an
         // already-installed package, so it needs its own copy of the same registration
@@ -126,10 +153,21 @@ abstract class StagePackagingSidecarsTask @Inject constructor() : DefaultTask() 
                 macOut
                     .resolve("${fsName}-daemon.plist")
                     .writeText(
-                        replaceTokens(plist.readText(), fsName, display)
+                        replaceTokens(plist.readText(), fsName, display, variant)
                             .replace(
                                 "__DAEMON_BUNDLE_ID__",
                                 macDaemonBundleId.getOrElse("com.wgtunnel.$fsName.daemon"),
+                            )
+                    )
+            }
+            macWifiAgentPlist.orNull?.asFile?.let { plist ->
+                macOut
+                    .resolve("${fsName}-wifi.plist")
+                    .writeText(
+                        replaceTokens(plist.readText(), fsName, display, variant)
+                            .replace(
+                                "__WIFI_AGENT_BUNDLE_ID__",
+                                macWifiAgentBundleId.getOrElse("com.wgtunnel.$fsName.wifi"),
                             )
                     )
             }
@@ -138,7 +176,7 @@ abstract class StagePackagingSidecarsTask @Inject constructor() : DefaultTask() 
         if (!windows.get()) return
         windowsServiceXml.orNull?.asFile?.let { xml ->
             out.resolve("service-wrapper.xml")
-                .writeText(replaceTokens(xml.readText(), fsName, display))
+                .writeText(replaceTokens(xml.readText(), fsName, display, variant))
         }
         val winSw = winSwPublishDir.orNull?.asFile ?: return
         sequenceOf("WinSW.exe", "WinSW-x64.exe")
@@ -147,8 +185,16 @@ abstract class StagePackagingSidecarsTask @Inject constructor() : DefaultTask() 
             ?.copyTo(out.resolve("service-wrapper.exe"), overwrite = true)
     }
 
-    private fun replaceTokens(text: String, fsName: String, display: String): String =
-        text.replace("__APP_FSNAME__", fsName).replace("__APP_DISPLAY__", display)
+    private fun replaceTokens(
+        text: String,
+        fsName: String,
+        display: String,
+        variant: String,
+    ): String =
+        text
+            .replace("__APP_FSNAME__", fsName)
+            .replace("__APP_DISPLAY__", display)
+            .replace("__APP_VARIANT__", variant)
 
     private fun java.io.File.writeExecutable(text: String) {
         writeText(text)

@@ -79,6 +79,7 @@ fun WifiSettingsScreen(viewModel: AutoTunnelViewModel = koinViewModel()) {
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
             modifier = Modifier.fillMaxSize().padding(padding),
         ) {
+            MacWifiPermissionNotice()
             Column {
                 GroupLabel(
                     stringResource(Res.string.general),

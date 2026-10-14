@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,11 +34,15 @@ import com.zaneschepke.wireguardautotunnel.desktop.ui.common.scroll.ScrollbarThi
 import com.zaneschepke.wireguardautotunnel.desktop.ui.common.scroll.appScrollbarStyle
 import com.zaneschepke.wireguardautotunnel.desktop.ui.navigation.TunnelNetwork
 import com.zaneschepke.wireguardautotunnel.desktop.ui.screens.autotunnel.components.NetworkRuleInput
+import com.zaneschepke.wireguardautotunnel.desktop.ui.screens.autotunnel.wifi.MacWifiPermissionCard
 import com.zaneschepke.wireguardautotunnel.desktop.ui.screens.tunnels.components.TunnelPickerList
 import com.zaneschepke.wireguardautotunnel.desktop.ui.sideeffects.AppSideEffect
 import com.zaneschepke.wireguardautotunnel.desktop.viewmodel.AutoTunnelViewModel
+import com.zaneschepke.wireguardautotunnel.desktop.wifi.MacWifiNameCoordinator
+import com.zaneschepke.wireguardautotunnel.desktop.wifi.macWifiNamePrompt
 import dev.nucleusframework.core.runtime.Platform
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
@@ -52,6 +57,9 @@ fun PreferredTunnelScreen(
     var currentSsidText by rememberSaveable { mutableStateOf("") }
     var currentBssidText by rememberSaveable { mutableStateOf("") }
     var selectedTunnel by remember { mutableStateOf<TunnelConfig?>(null) }
+    val wifiNames = koinInject<MacWifiNameCoordinator>()
+    val wifiStatus by wifiNames.authorization.collectAsState()
+    val wifiPrompt = macWifiNamePrompt(wifiStatus)
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
@@ -89,6 +97,15 @@ fun PreferredTunnelScreen(
                     modifier = Modifier.fillMaxSize().padding(end = ScrollbarThickness),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
+                    if (wifiPrompt != null) {
+                        item {
+                            MacWifiPermissionCard(
+                                prompt = wifiPrompt,
+                                onAllow = wifiNames::requestAuthorization,
+                                onOpenSettings = wifiNames::openLocationSettings,
+                            )
+                        }
+                    }
                     items(uiState.tunnels, key = { it.id }) { tunnel ->
                         val expanded = selectedTunnel?.id == tunnel.id
                         Column {

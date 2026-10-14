@@ -11,6 +11,9 @@ object Routes {
     const val DAEMON_AUTO_TUNNEL_STATUS = "$DAEMON_BASE/auto-tunnel/status"
     const val DAEMON_AUTO_TUNNEL_STATUS_WS = "$DAEMON_BASE/auto-tunnel/status/ws"
     const val DAEMON_AUTO_TUNNEL_OVERRIDE = "$DAEMON_BASE/auto-tunnel/user-override"
+    const val DAEMON_WIFI_SSID = "$DAEMON_BASE/network/wifi-ssid"
+    const val DAEMON_WIFI_UNDERLAY_WS = "$DAEMON_BASE/network/wifi-underlay/ws"
+    const val WIFI_UNDERLAY_READ = "read"
 
     const val DAEMON_LOGS_ENABLED = "$DAEMON_BASE/logs/enabled"
     const val DAEMON_LOGS_WS = "$DAEMON_BASE/logs/ws"
