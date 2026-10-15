@@ -30,7 +30,6 @@ import dev.nucleusframework.core.runtime.Platform
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
-/** Explains the macOS Location prompt, then asks only after the user opts in. */
 @Composable
 fun MacWifiPermissionNotice(coordinator: MacWifiNameCoordinator = koinInject()) {
     if (Platform.Current != Platform.MacOS) return

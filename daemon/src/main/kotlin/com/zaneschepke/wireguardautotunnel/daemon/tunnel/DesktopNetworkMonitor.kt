@@ -46,7 +46,7 @@ class DesktopNetworkMonitor(scope: CoroutineScope) : NetworkMonitor {
 
     fun stop() = impl.stop()
 
-    /** Records a Wi-Fi name read by the user-session helper. An empty name clears it. */
+    // Records a Wi-Fi name read by the helper. An empty name clears it.
     fun setObservedSsid(ssid: String) {
         runCatching { WifiSsidNative.setObserved(ssid) }
             .onFailure { log.w(it) { "Failed to record Wi-Fi name" } }
