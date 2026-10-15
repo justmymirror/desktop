@@ -154,6 +154,7 @@ tasks.named("convertXmlValueResourcesForJvmMain") { dependsOn(unescapeTranslated
 val isWindows = System.getProperty("os.name").orEmpty().startsWith("Windows", ignoreCase = true)
 val isMacOS = System.getProperty("os.name").orEmpty().startsWith("Mac", ignoreCase = true)
 val macDaemonBundleIdValue = "com.wgtunnel.$appFsName.daemon"
+val macWifiAgentBundleIdValue = "com.wgtunnel.$appFsName.wifi"
 val packagedJvmArgs =
     listOf(
         "-Dapp.variant=$packagingVariant",
@@ -175,7 +176,7 @@ val stagePackagingSidecars =
         macOS.set(isMacOS)
         macDaemonBundleId.set(macDaemonBundleIdValue)
         macDaemonPlist.set(rootProject.file("packaging/macos/com.wgtunnel.daemon.plist"))
-        macWifiAgentBundleId.set("com.wgtunnel.$appFsName.wifi")
+        macWifiAgentBundleId.set(macWifiAgentBundleIdValue)
         macWifiAgentPlist.set(rootProject.file("packaging/macos/com.wgtunnel.wifi-agent.plist"))
         appVariant.set(packagingVariant)
         linuxService.set(rootProject.file("packaging/linux/wgtunnel-daemon.service"))
@@ -470,30 +471,6 @@ nucleus.application {
     }
 }
 
-// The GraalVM .app is what ships. Insert the Location usage strings into the
-// generated Info.plist so the system prompt is attributed to WG Tunnel.
-tasks
-    .matching { it.name == "generateGraalvmInfoPlist" }
-    .configureEach {
-        inputs.property("macWifiLocationUsage", macWifiLocationPlistKeys)
-        doLast {
-            val plist = outputs.files.singleFile
-            val text = plist.readText()
-            if (text.contains("<key>NSLocationUsageDescription</key>")) return@doLast
-            // Anchor on the outer dict's close next to </plist>.
-            val closeRegex = Regex("""</dict>\s*</plist>""")
-            val match =
-                closeRegex.find(text)
-                    ?: error(
-                        "generateGraalvmInfoPlist: could not find the closing </dict></plist> in " +
-                            "${plist.absolutePath} to insert the Wi-Fi Location usage keys"
-                    )
-            val at = match.range.first
-            plist.writeText(
-                text.substring(0, at) + macWifiLocationPlistKeys + "\n" + text.substring(at)
-            )
-        }
-    }
 
 val graalvmLaunchersDir = layout.buildDirectory.dir("compose/binaries/main/graalvm-app/$appFsName")
 val graalvmNativeCompileDirs =
@@ -570,6 +547,38 @@ if (isMacOS) {
         }
     graalvmSidecarTaskNames += "stageMacDaemonPlist"
     graalvmSidecarTaskNames += "stageMacWifiAgentPlist"
+
+    // generateGraalvmInfoPlist only writes the tmp template as Nucleus doesn't copy it into the
+    // .app bundle's real Contents/Info.plist until copyGraalvmInfoPlist runs later, so the
+    // Location usage keys must be inserted after that copy, not appended to generateGraalvmInfoPlist
+    // itself.
+    val patchMacWifiLocationPlist =
+        tasks.register("patchMacWifiLocationPlist") {
+            group = "nucleus"
+            description =
+                "Insert the Wi-Fi Location usage keys into the built .app bundle's Info.plist."
+            dependsOn("copyGraalvmInfoPlist")
+            doNotTrackState("Mutates copyGraalvmInfoPlist's declared output in place")
+            doLast {
+                val plist = macBundleContents("Info.plist").get()
+                val text = plist.readText()
+                if (text.contains("<key>NSLocationUsageDescription</key>")) return@doLast
+                // Anchor on the outer dict's close next to </plist>, which a well-formed plist
+                // guarantees is unique regardless of how the generator indents it.
+                val closeRegex = Regex("""</dict>\s*</plist>""")
+                val match =
+                    closeRegex.find(text)
+                        ?: error(
+                            "patchMacWifiLocationPlist: could not find the closing </dict></plist> " +
+                                "in ${plist.absolutePath} to insert the Wi-Fi Location usage keys"
+                        )
+                val at = match.range.first
+                plist.writeText(
+                    text.substring(0, at) + macWifiLocationPlistKeys + "\n" + text.substring(at)
+                )
+            }
+        }
+    graalvmSidecarTaskNames += "patchMacWifiLocationPlist"
 }
 
 fun macBundleContents(child: String) = provider {
@@ -604,6 +613,15 @@ afterEvaluate {
     tasks
         .matching { it.name.startsWith("packageGraalvm") }
         .configureEach { dependsOn(graalvmSidecarTaskNames) }
+
+    // codesignGraalvmBundle currently runs before these three, so its ad-hoc signature's seal
+    // doesn't cover the plists/Info.plist keys they add afterward.
+    // Force these to run first instead, matching the existing codesignGraalvmDylibs pattern.
+    if (isMacOS) {
+        tasks.named("codesignGraalvmBundle") {
+            dependsOn("stageMacDaemonPlist", "stageMacWifiAgentPlist", "patchMacWifiLocationPlist")
+        }
+    }
 }
 
 tasks.named("copyNonXmlValueResourcesForJvmMain") { dependsOn("exportLibraryDefinitions") }

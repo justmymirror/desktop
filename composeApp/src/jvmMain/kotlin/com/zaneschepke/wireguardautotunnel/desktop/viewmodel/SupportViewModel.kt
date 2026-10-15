@@ -19,7 +19,9 @@ import dev.nucleusframework.updater.UpdateInfo
 import dev.nucleusframework.updater.UpdateResult
 import java.io.File
 import kotlin.coroutines.resume
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import org.orbitmvi.orbit.OrbitContainerHost
 import org.orbitmvi.orbit.viewmodel.orbitContainer
@@ -63,10 +65,14 @@ class SupportViewModel(private val appUpdater: AppUpdater) :
 
     fun onInstallUpdate(file: File) = intent { appUpdater.install(file) }
 
-    // macOS unregisters the daemon and Wi-Fi helper before the app itself is removed.
+    // macOS unregisters the daemon and Wi-Fi helper before the app itself is removed. The
+    // helper's call must on its own dispatcher or the unregister hangs for the second call.
     fun onRemoveBackgroundService() = intent {
         val daemonError = unregisterMacService(AppService.Daemon(daemonServiceName))
-        val agentError = unregisterMacService(AppService.Agent(wifiAgentServiceName))
+        val agentError =
+            withContext(Dispatchers.IO) {
+                unregisterMacService(AppService.Agent(wifiAgentServiceName))
+            }
         val error = daemonError ?: agentError
         postSideEffect(
             if (error == null) {

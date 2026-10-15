@@ -50,12 +50,14 @@ import io.github.sudarshanmhasrup.localina.api.LocaleUpdater
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import org.orbitmvi.orbit.OrbitContainerHost
 import org.orbitmvi.orbit.syntax.Syntax
@@ -191,6 +193,9 @@ class AppViewModel(
 
             // SMAppService requires an explicit register() call before macOS will ever
             // load it. Safe to call on every launch as it no-ops if already registered/approved.
+            //
+            // AppServiceManager.register() called twice on the same coroutine hangs, so we register
+            // the agent and daemon on different coroutines
             if (isMacOS) {
                 intent {
                     registerMacService(
@@ -199,12 +204,16 @@ class AppViewModel(
                         displayName = getString(Res.string.background_service_name),
                         toastId = DAEMON_APPROVAL_TOAST_ID,
                     )
-                    registerMacService(
-                        AppService.Agent(wifiAgentServiceName),
-                        logLabel = "Wi-Fi helper",
-                        displayName = getString(Res.string.wifi_helper_service_name),
-                        toastId = WIFI_AGENT_APPROVAL_TOAST_ID,
-                    )
+                }
+                intent {
+                    withContext(Dispatchers.IO) {
+                        registerMacService(
+                            AppService.Agent(wifiAgentServiceName),
+                            logLabel = "Wi-Fi helper",
+                            displayName = getString(Res.string.wifi_helper_service_name),
+                            toastId = WIFI_AGENT_APPROVAL_TOAST_ID,
+                        )
+                    }
                 }
             }
 
@@ -315,7 +324,10 @@ class AppViewModel(
      */
     private suspend fun restartMacDaemon(): Boolean {
         val daemonOk = restartMacService(AppService.Daemon(daemonServiceName), "daemon")
-        restartMacService(AppService.Agent(wifiAgentServiceName), "Wi-Fi helper")
+        // See above registration limitation, same for restart
+        withContext(Dispatchers.IO) {
+            restartMacService(AppService.Agent(wifiAgentServiceName), "Wi-Fi helper")
+        }
         return daemonOk
     }
 
