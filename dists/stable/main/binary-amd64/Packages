@@ -1,20 +1,20 @@
 Package: wgtunnel
-Version: 2.4.0
+Version: 2.4.1
 License: unknown
 Vendor: WG Tunnel
 Architecture: amd64
 Maintainer: WG Tunnel <support@wgtunnel.com>
-Installed-Size: 304539
+Installed-Size: 308827
 Depends: libgtk-3-0, libc6, libstdc++6, libfreetype6, libfontconfig1
 Recommends: libappindicator3-1
 Homepage: https://wgtunnel.com
 Priority: optional
 Section: default
-Filename: pool/main/w/wgtunnel/wgtunnel_2.4.0_amd64.deb
-Size: 103614032
-SHA256: a43c976a7b58b94380caa586f9eda11165c32738d2aa0ee68397cde5cb017ca6
-SHA1: 6028ac7710c77ab9e40511e9058f82538844ea9c
-MD5sum: e5c5101a8750855d2d5f624122cecabf
+Filename: pool/main/w/wgtunnel/wgtunnel_2.4.1_amd64.deb
+Size: 104631216
+SHA256: dcb079500e92affe038612d2d1bc0988136361ac4d1583f675c63bcc1214ef2a
+SHA1: e47f74ac3644237f07677d0711303d762d740628
+MD5sum: 15ee85ba366fc7884fc8e5e7bb6f07d9
 Description: 
   WG Tunnel: An advanced, open-source client for WireGuard and AmneziaWG.
 
