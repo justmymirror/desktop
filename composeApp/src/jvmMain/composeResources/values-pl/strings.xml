@@ -163,13 +163,9 @@
     <string name="mapped">Zmapowano</string>
     <string name="tunnel_mapping"></string>
     <string name="wifi_settings">Ustawienia Wi-Fi</string>
-    <string name="wifi_name_permission_title">Nazwa Wi-Fi</string>
-    <string name="wifi_name_permission_body">System macOS ukrywa nazwę sieci Wi-Fi, dopóki dla aplikacji WG Tunnel nie zostaną włączone Usługi lokalizacji. Przycisk otwiera odpowiednią stronę ustawień. Nazwa sieci jest wykorzystywana wyłącznie do rozpoznawania zaufanych sieci. Aplikacja WG Tunnel nie śledzi Twojej lokalizacji.</string>
+    <string name="wifi_name_permission_title">Uprawnienia lokalizacji</string>
+    <string name="wifi_name_permission_body">Do odczytania nazwy podłączonej sieci Wi-Fi na potrzeby automatycznego tunelowania w systemie macOS wymagane są usługi lokalizacyjne i odpowiednie uprawnienia. WG Tunnel nigdy nie śledzi Twojej lokalizacji.</string>
     <string name="wifi_name_allow">Otwórz ustawienia lokalizacji</string>
-    <string name="wifi_name_unavailable_title">Nazwa Wi-Fi niedostępna</string>
-    <string name="wifi_name_denied_body">Usługi lokalizacji są wyłączone dla aplikacji WG Tunnel, więc system macOS nie udostępni nazwy sieci Wi-Fi. Włącz tę opcję w Ustawieniach systemowych, w sekcji Prywatność i ochrona > Usługi lokalizacji.</string>
-    <string name="wifi_name_services_off_body">Usługi lokalizacji są na tym komputerze Mac wyłączone, dlatego nazwa sieci Wi-Fi jest niedostępna. Włącz usługi lokalizacji w Ustawieniach systemowych, w sekcji „Prywatność i ochrona” > „Usługi lokalizacji”, a następnie udziel uprawnień aplikacji WG Tunnel.</string>
-    <string name="wifi_name_open_settings">Otwórz ustawienia lokalizacji</string>
     <string name="ethernet">Ethernet</string>
     <string name="no_network">Brak połączenia z siecią</string>
     <string name="active_network">Aktywna sieć:</string>
