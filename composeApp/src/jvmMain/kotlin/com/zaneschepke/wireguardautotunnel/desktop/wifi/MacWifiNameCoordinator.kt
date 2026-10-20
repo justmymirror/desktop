@@ -13,8 +13,8 @@ import kotlinx.coroutines.launch
 /**
  * Tracks the macOS Wi-Fi helper's Location grant.
  *
- * The helper is a separate bundle, so a grant on the GUI process does not let it read the
- * network name. The card follows the code the helper posts to the daemon.
+ * The helper is a separate bundle, so a grant on the GUI process does not let it read the network
+ * name. The card follows the code the helper posts to the daemon.
  */
 class MacWifiNameCoordinator(
     private val scope: CoroutineScope,

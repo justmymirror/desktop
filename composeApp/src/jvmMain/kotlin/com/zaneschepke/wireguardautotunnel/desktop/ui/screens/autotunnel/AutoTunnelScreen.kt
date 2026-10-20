@@ -80,7 +80,8 @@ fun AutoTunnelScreen(viewModel: AutoTunnelViewModel = koinViewModel()) {
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
-            is AppSideEffect.Toast -> toaster.show(Toast(sideEffect.message, sideEffect.type))
+            is AppSideEffect.Toast ->
+                toaster.show(Toast(message = sideEffect.message, type = sideEffect.type))
             else -> Unit
         }
     }

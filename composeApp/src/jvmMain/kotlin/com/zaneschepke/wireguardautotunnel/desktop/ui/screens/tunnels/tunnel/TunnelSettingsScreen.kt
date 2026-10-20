@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.AltRoute
+import androidx.compose.material.icons.automirrored.outlined.CallMerge
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Dns
@@ -66,7 +66,8 @@ fun TunnelSettingsScreen(viewModel: TunnelViewModel) {
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
-            is AppSideEffect.Toast -> toaster.show(Toast(sideEffect.message, sideEffect.type))
+            is AppSideEffect.Toast ->
+                toaster.show(Toast(message = sideEffect.message, type = sideEffect.type))
             else -> Unit
         }
     }
@@ -153,7 +154,7 @@ fun TunnelSettingsScreen(viewModel: TunnelViewModel) {
                 )
                 SurfaceRow(
                     leading = {
-                        Icon(Icons.AutoMirrored.Outlined.AltRoute, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Outlined.CallMerge, contentDescription = null)
                     },
                     title = stringResource(Res.string.entry_tunnel),
                     description = { DescriptionText(entryLabel) },

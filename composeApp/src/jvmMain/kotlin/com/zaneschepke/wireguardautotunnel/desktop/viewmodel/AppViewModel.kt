@@ -21,8 +21,8 @@ import com.zaneschepke.wireguardautotunnel.client.service.BackendService
 import com.zaneschepke.wireguardautotunnel.client.service.DaemonService
 import com.zaneschepke.wireguardautotunnel.composeApp.BuildConfig
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.Res
-import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_not_running
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.background_service_name
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_not_running
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_outdated_template
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_restart_command_label
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_start_command_label

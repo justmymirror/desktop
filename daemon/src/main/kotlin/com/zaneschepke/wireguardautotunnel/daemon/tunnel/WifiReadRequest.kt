@@ -6,10 +6,9 @@ import com.zaneschepke.wireguardautotunnel.core.wifi.isUnknownWifiSsid
 /**
  * Whether a new underlay snapshot should ask the Wi-Fi helper to read.
  *
- * A null [previous] is the monitor's first snapshot and is not an ask.
- * The helper's own report is what turns a blank or `unknown_ssid` into a real name, so that change
- * is not an ask. A name disappearing, changing from one known name to another,
- * or a different interface still asks.
+ * A null [previous] is the monitor's first snapshot and is not an ask. The helper's own report is
+ * what turns a blank or `unknown_ssid` into a real name, so that change is not an ask. A name
+ * disappearing, changing from one known name to another, or a different interface still asks.
  */
 internal fun shouldAskWifiRead(previous: NetworkInfoDto?, current: NetworkInfoDto): Boolean {
     if (previous == null) return false

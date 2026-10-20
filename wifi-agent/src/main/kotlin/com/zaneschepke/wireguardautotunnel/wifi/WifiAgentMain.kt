@@ -53,9 +53,7 @@ internal enum class Wake {
     Authorization,
 }
 
-/**
- * User-session reader for the macOS Wi-Fi name.
- */
+/** User-session reader for the macOS Wi-Fi name. */
 fun main() {
     Logger.setLogWriters(CommonWriter())
     AppVariant.applyProcessDefaults()

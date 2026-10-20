@@ -59,6 +59,7 @@
     <string name="display_theme">Display theme</string>
     <string name="language">Language</string>
     <string name="trusted_wifi_names">Trusted Wi-Fi names</string>
+    <string name="trusted_wifi_desc">Wi-Fi networks that disable the tunnel</string>
     <string name="primary_tunnel">Default tunnel</string>
     <string name="entry_tunnel">Entry tunnel</string>
     <string name="entry_tunnel_desc">Send this tunnel through another tunnel.</string>
@@ -381,6 +382,7 @@
     <string name="add">Add</string>
     <string name="bssid" translatable="false">BSSID</string>
     <string name="trusted_bssid">Trusted BSSID</string>
+    <string name="trusted_bssid_desc">Access points that disable the tunnel</string>
 
     <string name="wifi_rules">Wi-Fi Rules</string>
     <string name="wildcard_desc">Enable advanced matching for networks using patterns</string>

@@ -17,8 +17,11 @@ fun wifiSsidToReport(granted: Boolean, associated: Boolean, ssid: String): Strin
 
 sealed interface WifiReadStep {
     data class Post(val ssid: String) : WifiReadStep
+
     data object Wait : WifiReadStep
+
     data object Stop : WifiReadStep
+
     data object RecheckAuth : WifiReadStep
 }
 

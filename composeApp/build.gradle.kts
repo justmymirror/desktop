@@ -36,8 +36,7 @@ val macWifiLocationUsage =
 
 // The helper uses the container bundle id.
 fun macWifiAgentInfoPlist(executable: String): String {
-    fun xml(value: String) =
-        value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    fun xml(value: String) = value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     return """
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -519,7 +518,6 @@ nucleus.application {
     }
 }
 
-
 val graalvmLaunchersDir = layout.buildDirectory.dir("compose/binaries/main/graalvm-app/$appFsName")
 val graalvmNativeCompileDirs =
     listOf(project(":daemon").layout.buildDirectory.dir("compose/tmp/main/graalvm/nativeCompile"))
@@ -660,23 +658,24 @@ if (isMacOS) {
                         "signMacWifiAgentBundle: nested helper app missing at ${nestedApp.absolutePath}"
                     )
                 }
-                val command =
-                    buildList {
-                        add("/usr/bin/codesign")
-                        add("--force")
-                        add("--timestamp")
-                        add("--options")
-                        add("runtime")
-                        add("--sign")
-                        add(identity)
-                        System.getenv("APPLE_SIGNING_KEYCHAIN")?.takeIf { it.isNotBlank() }?.let {
+                val command = buildList {
+                    add("/usr/bin/codesign")
+                    add("--force")
+                    add("--timestamp")
+                    add("--options")
+                    add("runtime")
+                    add("--sign")
+                    add(identity)
+                    System.getenv("APPLE_SIGNING_KEYCHAIN")
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let {
                             add("--keychain")
                             add(it)
                         }
-                        add("--entitlements")
-                        add(rootProject.file("packaging/macos/entitlements.plist").absolutePath)
-                        add(nestedApp.absolutePath)
-                    }
+                    add("--entitlements")
+                    add(rootProject.file("packaging/macos/entitlements.plist").absolutePath)
+                    add(nestedApp.absolutePath)
+                }
                 val proc = ProcessBuilder(command).redirectErrorStream(true).start()
                 val output = proc.inputStream.bufferedReader().readText()
                 val code = proc.waitFor()
@@ -692,8 +691,7 @@ if (isMacOS) {
     val patchMacWifiLocationPlist =
         tasks.register("patchMacWifiLocationPlist") {
             group = "nucleus"
-            description =
-                "Remove Wi-Fi Location usage keys from the main .app Info.plist."
+            description = "Remove Wi-Fi Location usage keys from the main .app Info.plist."
             dependsOn("copyGraalvmInfoPlist")
             doNotTrackState("Mutates copyGraalvmInfoPlist's declared output in place")
             doLast {

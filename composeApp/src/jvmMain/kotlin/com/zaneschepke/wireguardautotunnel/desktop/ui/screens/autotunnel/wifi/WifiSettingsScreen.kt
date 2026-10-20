@@ -24,6 +24,8 @@ import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.docs_w
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.general
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.learn_more
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.trusted_bssid
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.trusted_bssid_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.trusted_wifi_desc
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.trusted_wifi_names
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.tunnel_mapping
 import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.tunnel_mapping_description
@@ -62,7 +64,8 @@ fun WifiSettingsScreen(viewModel: AutoTunnelViewModel = koinViewModel()) {
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
-            is AppSideEffect.Toast -> toaster.show(Toast(sideEffect.message, sideEffect.type))
+            is AppSideEffect.Toast ->
+                toaster.show(Toast(message = sideEffect.message, type = sideEffect.type))
             else -> Unit
         }
     }
@@ -128,8 +131,11 @@ fun WifiSettingsScreen(viewModel: AutoTunnelViewModel = koinViewModel()) {
                         currentSsidText = ""
                     },
                     supportingContent = {
-                        if (wildcardEnabled) {
-                            DescriptionText(stringResource(Res.string.wildcard_wifi_desc))
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            DescriptionText(stringResource(Res.string.trusted_wifi_desc))
+                            if (wildcardEnabled) {
+                                DescriptionText(stringResource(Res.string.wildcard_wifi_desc))
+                            }
                         }
                     },
                 )
@@ -146,8 +152,11 @@ fun WifiSettingsScreen(viewModel: AutoTunnelViewModel = koinViewModel()) {
                             currentBssidText = ""
                         },
                         supportingContent = {
-                            if (wildcardEnabled) {
-                                DescriptionText(stringResource(Res.string.wildcard_bssid_desc))
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                DescriptionText(stringResource(Res.string.trusted_bssid_desc))
+                                if (wildcardEnabled) {
+                                    DescriptionText(stringResource(Res.string.wildcard_bssid_desc))
+                                }
                             }
                         },
                     )

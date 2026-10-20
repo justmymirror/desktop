@@ -195,7 +195,7 @@ fun main(args: Array<String>) {
         args = args,
         backend = NucleusBackend.Tao,
         dockIconFollowsWindows = true,
-        enableSingleInstance = true
+        enableSingleInstance = true,
     ) {
         var nucleusWindowRef: NucleusWindow? by remember { mutableStateOf(null) }
         // A login-triggered launch should come up quietly in the tray

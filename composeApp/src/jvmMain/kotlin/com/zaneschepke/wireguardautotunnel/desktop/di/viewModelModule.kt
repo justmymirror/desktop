@@ -20,9 +20,7 @@ import org.koin.dsl.module
 val viewModelModule = module {
     single { AppUpdater() }
     // Created at startup so the permission card follows the helper while the window is hidden.
-    single(createdAtStart = true) {
-        MacWifiNameCoordinator(scope = get(), daemonService = get())
-    }
+    single(createdAtStart = true) { MacWifiNameCoordinator(scope = get(), daemonService = get()) }
     viewModelOf(::AppViewModel)
     viewModelOf(::TunnelsViewModel)
     viewModel { (id: Long) -> TunnelViewModel(get(), get(), get(), id) }

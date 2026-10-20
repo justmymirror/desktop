@@ -1,8 +1,6 @@
 package com.zaneschepke.wireguardautotunnel.core.wifi
 
-/**
- * Location permission for reading the macOS Wi-Fi name.
- */
+/** Location permission for reading the macOS Wi-Fi name. */
 enum class WifiAuthorization(val code: Int) {
     NotDetermined(0),
     Restricted(1),

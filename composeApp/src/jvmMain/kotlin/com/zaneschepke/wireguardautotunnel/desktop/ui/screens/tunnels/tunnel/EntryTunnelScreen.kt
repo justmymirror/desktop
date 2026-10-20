@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.AltRoute
+import androidx.compose.material.icons.automirrored.outlined.CallMerge
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.LinkOff
 import androidx.compose.material3.Icon
@@ -40,7 +40,8 @@ fun EntryTunnelScreen(viewModel: TunnelViewModel) {
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
-            is AppSideEffect.Toast -> toaster.show(Toast(sideEffect.message, sideEffect.type))
+            is AppSideEffect.Toast ->
+                toaster.show(Toast(message = sideEffect.message, type = sideEffect.type))
             else -> Unit
         }
     }
@@ -58,7 +59,7 @@ fun EntryTunnelScreen(viewModel: TunnelViewModel) {
             Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
                 SurfaceRow(
                     leading = {
-                        Icon(Icons.AutoMirrored.Outlined.AltRoute, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Outlined.CallMerge, contentDescription = null)
                     },
                     title = stringResource(Res.string.entry_tunnel_add_another),
                     description = { DescriptionText(stringResource(Res.string.entry_tunnel_desc)) },
@@ -79,7 +80,9 @@ fun EntryTunnelScreen(viewModel: TunnelViewModel) {
                     viewModel.onEntryTunnel(it.id)
                     navController.pop()
                 },
-                leading = { Icon(Icons.AutoMirrored.Outlined.AltRoute, contentDescription = null) },
+                leading = {
+                    Icon(Icons.AutoMirrored.Outlined.CallMerge, contentDescription = null)
+                },
                 leadingItem = {
                     val noneSelected = tunnel.entryTunnelId == null
                     SurfaceRow(

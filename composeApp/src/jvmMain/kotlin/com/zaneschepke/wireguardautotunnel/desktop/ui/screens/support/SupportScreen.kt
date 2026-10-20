@@ -121,7 +121,7 @@ fun SupportScreen(viewModel: SupportViewModel = koinViewModel()) {
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is com.zaneschepke.wireguardautotunnel.desktop.ui.sideeffects.AppSideEffect.Toast ->
-                toaster.show(Toast(sideEffect.message, sideEffect.type))
+                toaster.show(Toast(message = sideEffect.message, type = sideEffect.type))
             else -> Unit
         }
     }
