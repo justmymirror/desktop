@@ -328,6 +328,7 @@ nucleus.application {
     nativeDistributions {
         targetFormats(
             TargetFormat.Nsis,
+            TargetFormat.Zip,
             TargetFormat.Deb,
             TargetFormat.Rpm,
             TargetFormat.Pacman,
