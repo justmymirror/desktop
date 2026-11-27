@@ -3,6 +3,7 @@ package com.zaneschepke.wireguardautotunnel.daemon
 import co.touchlab.kermit.CommonWriter
 import co.touchlab.kermit.Logger
 import com.wgtunnel.backend.TunnelBackend
+import com.wgtunnel.backend.system.DesktopFirewall
 import com.wgtunnel.backend.system.FileOwner
 import com.zaneschepke.wireguardautotunnel.core.helper.FilePathsHelper
 import com.zaneschepke.wireguardautotunnel.core.helper.WindowsSid
@@ -26,15 +27,8 @@ import kotlinx.serialization.json.Json
 private val log = Logger.withTag("Daemon")
 
 fun main(args: Array<String>) {
-    // A packaged daemon is built for one variant, so its service, the early boot unit, the
-    // uninstallers and "Remove block" all act on that install. An explicit variant still wins.
-    if (
-        System.getProperty("org.graalvm.nativeimage.imagecode") == "runtime" &&
-            System.getProperty(AppVariant.PROP_NAME) == null &&
-            System.getenv(AppVariant.ENV_NAME) == null
-    ) {
-        System.setProperty(AppVariant.PROP_NAME, BuildConfig.VARIANT)
-    }
+    // Its service, the early boot unit, uninstallers and "Remove block" all act on this install.
+    AppVariant.useBuiltIn(BuildConfig.VARIANT)
     Logger.setLogWriters(CommonWriter())
     AppVariant.applyProcessDefaults()
     initLogger()
@@ -49,6 +43,8 @@ fun main(args: Array<String>) {
     // Before anything else is set up, so the kill switch is back as soon as possible.
     val cacheRepository = SettingsDaemonCacheRepository(json)
     val earlyKillSwitch = runBlocking { EarlyKillSwitch.apply(cacheRepository) }
+    // No tunnel runs yet, so any the OS still lists belong to a run that exited without closing them.
+    DesktopFirewall.clearTunnelNetworkState()
 
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     val networkMonitor = DesktopNetworkMonitor(scope)

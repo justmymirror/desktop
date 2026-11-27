@@ -37,6 +37,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -175,6 +176,8 @@ private fun loadInitialWindowState(): InitialWindowState {
 }
 
 fun main(args: Array<String>) {
+    // A beta build keeps its own data, lock and daemon socket.
+    AppVariant.useBuiltIn(BuildConfig.VARIANT)
     Logger.setLogWriters(CommonWriter())
     AppVariant.applyProcessDefaults()
     Logger.setLogWriters(platformLogWriter())
@@ -304,7 +307,8 @@ fun main(args: Array<String>) {
                 .collectAsState(emptyList<TunnelStatus>() to false)
             val (trayTunnelStatuses, trayLockdownActive) = trayStatus
             val appIcon = painterResource(Res.drawable.appicon)
-            val appName = stringResource(Res.string.app_name)
+            // "WG Tunnel Beta" for beta, in the tray tooltip as well as the window.
+            val appName = stringResource(Res.string.app_name) + AppVariant.current.displaySuffix
             val trayOpenLabel = stringResource(Res.string.tray_open)
             val trayMinimizeLabel = stringResource(Res.string.tray_minimize_to_tray)
             val trayExitLabel = stringResource(Res.string.tray_exit)
@@ -330,6 +334,8 @@ fun main(args: Array<String>) {
                         )
                 }
 
+            // Tray renders iconContent offscreen and only re-renders when its inputs change
+            val currentTrayBadgeState by rememberUpdatedState(trayBadgeState)
             Tray(
                 iconContent = {
                     val useLightIcon =
@@ -347,7 +353,7 @@ fun main(args: Array<String>) {
                                 ColorFilter.tint(if (useLightIcon) Color.White else Color.Black),
                         )
 
-                        trayBadgeState?.let {
+                        currentTrayBadgeState?.let {
                             Icon(
                                 imageVector = Icons.Filled.Circle,
                                 contentDescription = it.description,
@@ -369,7 +375,7 @@ fun main(args: Array<String>) {
                 MaterialDecoratedWindow(
                     visible = isMainWindowVisible,
                     onCloseRequest = { handleWindowIntent(WindowIntent.HIDE) },
-                    title = appName + AppVariant.current.displaySuffix,
+                    title = appName,
                     resizable = true,
                     icon = appIcon,
                     state = windowState,
